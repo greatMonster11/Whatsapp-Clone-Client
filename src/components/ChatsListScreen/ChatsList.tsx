@@ -64,7 +64,7 @@ const getChatsQuery = `
       lastMessage {
         id
         content
-        createdAt
+        createdAt 
       }
     }
   }
