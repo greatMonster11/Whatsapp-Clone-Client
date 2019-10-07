@@ -10,7 +10,7 @@ import {
 } from '@testing-library/react';
 import { createBrowserHistory } from 'history';
 import { mockApolloClient } from '../../test-helpers';
-import ChatsList, { getChatsQuery } from './ChatsList';
+import ChatsList from './ChatsList';
 import * as queries from '../../graphql/queries';
 
 describe('ChatsList', () => {
