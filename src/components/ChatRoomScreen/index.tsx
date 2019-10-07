@@ -1,5 +1,7 @@
-import React, { useCallback } from 'react';
+import { defaultDataIdFromObject } from 'apollo-cache-inmemory';
 import gql from 'graphql-tag';
+import React from 'react';
+import { useCallback } from 'react';
 import { useQuery, useMutation } from '@apollo/react-hooks';
 import styled from 'styled-components';
 import ChatNavbar from './ChatNavbar';
@@ -8,7 +10,6 @@ import MessagesList from './MessagesList';
 import { History } from 'history';
 import * as queries from '../../graphql/queries';
 import * as fragments from '../../graphql/fragments';
-import { defaultDataIdFromObject } from 'apollo-cache-inmemory';
 
 const Container = styled.div`
   background: url(/assets/chat-background.jpg);
@@ -20,7 +21,7 @@ const Container = styled.div`
 const getChatQuery = gql`
   query GetChat($chatId: ID!) {
     chat(chatId: $chatId) {
-      ...fullChat
+      ...FullChat
     }
   }
   ${fragments.fullChat}
@@ -30,6 +31,7 @@ const addMessageMutation = gql`
   mutation AddMessage($chatId: ID!, $content: String!) {
     addMessage(chatId: $chatId, content: $content) {
       ...Message
+    }
   }
   ${fragments.message}
 `;
@@ -59,13 +61,14 @@ interface ChatsResult {
 }
 
 const ChatRoomScreen: React.FC<ChatRoomScreenParams> = ({
-  chatId,
   history,
+  chatId,
 }) => {
   const {
     data: { chat },
-  } = useQuery<any>(getChatQuery, { variables: { chatId } });
-
+  } = useQuery<any>(getChatQuery, {
+    variables: { chatId },
+  });
   const [addMessage] = useMutation(addMessageMutation);
 
   const onSendMessage = useCallback(
@@ -83,7 +86,6 @@ const ChatRoomScreen: React.FC<ChatRoomScreenParams> = ({
             content,
           },
         },
-
         update: (client, { data }) => {
           if (data && data.addMessage) {
             type FullChat = { [key: string]: any };
@@ -131,6 +133,7 @@ const ChatRoomScreen: React.FC<ChatRoomScreenParams> = ({
               fragmentName: 'FullChat',
               data: fullChat,
             });
+
             let clientChatsData;
             try {
               clientChatsData = client.readQuery<ChatsResult>({
