@@ -8,6 +8,7 @@ import MessagesList from './MessagesList';
 import { History } from 'history';
 import * as queries from '../../graphql/queries';
 import * as fragments from '../../graphql/fragments';
+import { defaultDataIdFromObject } from 'apollo-cache-inmemory';
 
 const Container = styled.div`
   background: url(/assets/chat-background.jpg);
@@ -82,52 +83,86 @@ const ChatRoomScreen: React.FC<ChatRoomScreenParams> = ({
             content,
           },
         },
+
         update: (client, { data }) => {
           if (data && data.addMessage) {
+            type FullChat = { [key: string]: any };
+            let fullChat;
+            const chatIdFromStore = defaultDataIdFromObject(chat);
+
+            if (chatIdFromStore === null) {
+              return;
+            }
+
+            try {
+              fullChat = client.readFragment<FullChat>({
+                id: chatIdFromStore,
+                fragment: fragments.fullChat,
+                fragmentName: 'FullChat',
+              });
+            } catch (e) {
+              return;
+            }
+
+            if (
+              fullChat === null ||
+              fullChat.messages === null ||
+              data === null ||
+              data.addMessage === null ||
+              data.addMessage.id === null
+            ) {
+              return;
+            }
+            if (
+              fullChat.messages.some(
+                (currentMessage: any) =>
+                  currentMessage.id === data.addMessage.id
+              )
+            ) {
+              return;
+            }
+
+            fullChat.messages.push(data.addMessage);
+            fullChat.lastMessage = data.addMessage;
+
+            client.writeFragment({
+              id: chatIdFromStore,
+              fragment: fragments.fullChat,
+              fragmentName: 'FullChat',
+              data: fullChat,
+            });
+            let clientChatsData;
+            try {
+              clientChatsData = client.readQuery<ChatsResult>({
+                query: queries.chats,
+              });
+            } catch (e) {
+              return;
+            }
+
+            if (!clientChatsData || clientChatsData === null) {
+              return null;
+            }
+            if (!clientChatsData.chats || clientChatsData.chats === undefined) {
+              return null;
+            }
+            const chats = clientChatsData.chats;
+
+            const chatIndex = chats.findIndex(
+              (currentChat: any) => currentChat.id === chatId
+            );
+            if (chatIndex === -1) return;
+            const chatWhereAdded = chats[chatIndex];
+
+            // The chat will appear at the top of the ChatsList component
+            chats.splice(chatIndex, 1);
+            chats.unshift(chatWhereAdded);
+
             client.writeQuery({
-              query: getChatQuery,
-              variables: { chatId },
-              data: {
-                chat: {
-                  ...chat,
-                  messages: chat.messages.concat(data.addMessage),
-                },
-              },
-            });
-          }
-
-          let clientChatsData;
-          try {
-            clientChatsData = client.readQuery<ChatsResult>({
               query: queries.chats,
+              data: { chats: chats },
             });
-          } catch (e) {
-            return;
           }
-
-          if (!clientChatsData || clientChatsData === null) {
-            return null;
-          }
-          if (!clientChatsData.chats || clientChatsData.chats === undefined) {
-            return null;
-          }
-          const chats = clientChatsData.chats;
-
-          const chatIndex = chats.findIndex(
-            (currentChat: any) => currentChat.id === chatId
-          );
-          if (chatIndex === -1) return;
-          const chatWhereAdded = chats[chatIndex];
-
-          chatWhereAdded.lastMessage = data.addMessage;
-          // The chat will appear at the top of the ChatsList component
-          chats.splice(chatIndex, 1);
-          chats.unshift(chatWhereAdded);
-
-          client.writeQuery({
-            query: queries.chats,
-            data: { chats: chats },
-          });
         },
       });
     },
