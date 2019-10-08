@@ -39,10 +39,12 @@
     "typescript": "3.6.3"
   },
   "scripts": {
+    "prestart": "yarn codegen",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
+    "codegen": "graphql-codegen",
     "format": "prettier \"**/*.{ts,tsx,css,graphql}\" --write"
   },
   "eslintConfig": {
