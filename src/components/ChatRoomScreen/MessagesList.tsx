@@ -17,8 +17,6 @@ type StyledProp = {
 };
 
 const MessageItem = styled.div`
-  float: right;
-  background-color: #dcf8c6;
   display: inline-block;
   position: relative;
   max-width: 100%;
