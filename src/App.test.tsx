@@ -11,6 +11,7 @@ it('renders without crashing', () => {
       result: { data: {} },
     },
   ]);
+
   const div = document.createElement('div');
   ReactDOM.render(<App />, div);
   ReactDOM.unmountComponentAtNode(div);

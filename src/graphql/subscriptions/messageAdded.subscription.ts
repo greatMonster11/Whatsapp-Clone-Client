@@ -3,7 +3,7 @@ import * as fragments from '../fragments';
 
 export default gql`
   subscription MessageAdded {
-    MessageAdded {
+    messageAdded {
       ...Message
     }
   }

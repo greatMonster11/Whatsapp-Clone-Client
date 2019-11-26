@@ -34,6 +34,7 @@ const App: React.FC = () => {
     </BrowserRouter>
   );
 };
+
 const redirectToChats = () => <Redirect to="/chats" />;
 
 export default App;
